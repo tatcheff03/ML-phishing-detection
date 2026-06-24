@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from datetime import datetime
+from sqlalchemy.orm import relationship
 from database import Base
 
 class ActivityLogs(Base):
@@ -12,3 +13,5 @@ class ActivityLogs(Base):
     ip_address = Column(String, nullable=True)
     endpoint = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="activity_logs")

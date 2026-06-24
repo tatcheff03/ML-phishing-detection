@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from datetime import datetime
+from sqlalchemy.orm import relationship
 from database import Base
 
 class URLChecks(Base):
@@ -11,3 +12,5 @@ class URLChecks(Base):
     risk_score = Column(Float, nullable=True)
     prediction = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="url_checks")

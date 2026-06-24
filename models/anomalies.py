@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from datetime import datetime
 from database import Base
+from sqlalchemy.orm import relationship
 
 class Anomalies(Base):
     __tablename__ = "anomalies"
@@ -11,3 +12,5 @@ class Anomalies(Base):
     risk_score = Column(Float, nullable=False)
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="anomalies")
