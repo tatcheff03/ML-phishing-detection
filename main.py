@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from database import engine, Base
+from config.database import engine, Base
 import models
 import api.auth_api
 import api.url_check_api

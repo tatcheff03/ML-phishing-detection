@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from models.user import User
 from services.user_service import UserService
-from services.utils import hash_password, verify_password
+from services.pass_utils import hash_password, verify_password
 
 class AuthService:
     def __init__(self, user_service):

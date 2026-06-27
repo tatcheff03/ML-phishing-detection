@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from database import get_db
+from config.database import get_db
 from services.user_service import UserService
 from services.auth_service import AuthService
 from schemas.usercreatemodels import UserCreate, UserOut, UserLogin
