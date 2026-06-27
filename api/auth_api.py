@@ -6,6 +6,8 @@ from services.user_service import UserService
 from services.auth_service import AuthService
 from schemas.usercreatemodels import UserCreate, UserOut, UserLogin
 from fastapi import HTTPException
+from auth.dependencies import get_current_user
+from auth.jwt import create_access_token
 
 router = APIRouter()
 
@@ -28,4 +30,16 @@ def login(user: UserLogin, auth_service: AuthService = Depends(get_auth_service)
     if not result:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return {"message": "Login successful", "user_id": result.id}
+    token = create_access_token(result.id, result.role)
+
+    return {"access_token": token, "token_type": "bearer"}
+
+# get info about logged user
+@router.get("/me")
+def get_me(user = Depends(get_current_user)):
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role
+    }

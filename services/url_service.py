@@ -56,7 +56,7 @@ class URLService:
         else:
             return "safe"
 
-    def save_check(self, url: str, score: float, label: str, user_id: int = 1):
+    def save_check(self, url: str, score: float, label: str, user_id: int):
         check = URLChecks(
             user_id=user_id,
             url_address=url,

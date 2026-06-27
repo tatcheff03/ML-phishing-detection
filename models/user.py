@@ -1,7 +1,8 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Enum
 from sqlalchemy.orm import relationship         
 from datetime import datetime
+from models.user_role import UserRole
 
 class User(Base):
     __tablename__ = "users"
@@ -10,7 +11,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role=Column(String, nullable=False, default="USER")
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.USER)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     
