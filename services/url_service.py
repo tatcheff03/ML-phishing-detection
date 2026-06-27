@@ -24,9 +24,9 @@ class URLService:
 
     # extract features logic from the URL
     def extract_features(self, url: str):
-        url = url.strip().lower()
+        url = url.strip().lower() # normalize url
         
-        has_https = url.startswith("https://")
+        has_https = url.startswith("https://") # check if orig.URl uses https
         url_for_parse = url
         
         # Add default scheme so urlparse extracts the hostname
@@ -34,8 +34,8 @@ class URLService:
             url_for_parse = 'https://' + url_for_parse 
         parsed = urlparse(url_for_parse)
 
-        domain = (parsed.hostname or "").lower()
-        text = url.replace("-", " ").replace("_", " ")
+        domain = (parsed.hostname or "").lower() # extract normalized hostname 
+        text = url.replace("-", " ").replace("_", " ") # prepare text for keyword search
         return {
             "url_length": len(url),
             "dots": url.count('.'),
@@ -61,7 +61,7 @@ class URLService:
         
 
 
-    # calculate risk based on the hardcoded features
+    # calculate structural risk
     def structural_risk(self, features):
         score = 0
         score += 40 if features["has_ip"] else 0
@@ -71,12 +71,14 @@ class URLService:
         score += 10 if not features["has_https"] else 0 
         return score
 
+    # calculate domain risk
     def domain_risk(self, features):
         score = 0
         score += 30 if features["suspicious_tld"] else 0
         score += 20 if features["free_hosting"] else 0
         return score
 
+    # calculate brand impersonation risk
     def brand_risk(self, f):
         
         is_impersonation = (f["brand_match"] and 
@@ -86,8 +88,7 @@ class URLService:
 
         return 0
         
-        
-
+    # calculate risk by spec.keywords
     def keyword_risk(self, features):
         score = 0
         score += 10 if features["phishing_keyword"] else 0
