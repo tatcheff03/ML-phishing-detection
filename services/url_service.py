@@ -1,14 +1,35 @@
 from urllib.parse import urlparse
 import ipaddress
 from models.url_checks import URLChecks
-from datetime import datetime
 from utils.url_patterns import *
+from utils.activities_actions import URL_CHECK
 
 
 class URLService:
-    def __init__(self, db):
+    def __init__(self, db, activitylog_service):
         self.db = db
+        self.activitylog_service = activitylog_service
+        
+    # all methods executed when checking a probale phishing URL
+    def check_url(self, url: str, user_id: int, ip_address: str):
+        endpoint = "/check"
+        
+        features = self.extract_features(url)
+        score = self.calc_risk(features)
+        label = self.classify_risk(score)
 
+        check = self.save_check(url, score, label, user_id)
+
+        # log the activity
+        self._log(
+            user_id=user_id,
+            action=URL_CHECK,
+            endpoint=endpoint,
+            ip_address=ip_address
+        )
+
+        return check
+    
     # check if it is valid url that contains IP address
     def has_ip(self, parsed):
         host = parsed.hostname
@@ -115,31 +136,13 @@ class URLService:
         score += self.keyword_risk(features)
 
         return score
-    
-    def calc_risk(self, features):
-        structural = self.structural_risk(features)
-        domain = self.domain_risk(features)
-        brand = self.brand_risk(features)
-        keyword = self.keyword_risk(features)
-
-        # print("FEATURES:", features)
-        # print("STRUCTURAL:", structural)
-        # print("DOMAIN:", domain)
-        # print("BRAND:", brand)
-        # print("KEYWORD:", keyword)
-
-        score = structural + domain + brand + keyword
-
-        # print("TOTAL:", score)
-
-        return score
 
     def save_check(self, url: str, score: float, label: str, user_id: int):
         check = URLChecks(
             user_id=user_id,
             url_address=url,
             risk_score=score,
-            prediction=label,
+            prediction=label
         )
 
         self.db.add(check)
@@ -147,3 +150,12 @@ class URLService:
         self.db.refresh(check)
 
         return check
+    
+    # helper method for logging
+    def _log(self, *, user_id= None, action, endpoint, ip_address):
+        self.activitylog_service.log_activity(
+            user_id=user_id,
+            action=action,
+            endpoint=endpoint,
+            ip_address=ip_address
+        )
