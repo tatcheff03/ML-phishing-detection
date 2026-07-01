@@ -7,7 +7,7 @@ class Anomalies(Base):
     __tablename__ = "anomalies"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     risk_score = Column(Float, nullable=False)
     description = Column(String, nullable=True)

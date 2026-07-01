@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from config.database import get_db
 from services.url_service import URLService
 from services.activitylog_service import ActivityLogService
+from services.anomaly_service import AnomalyService
 from schemas.urlcheckrequest import URLCheckRequest, URLCheckResponse
 from auth.dependencies import get_current_user
 
@@ -11,13 +12,12 @@ from auth.dependencies import get_current_user
 router = APIRouter()
 
 # services dependency injection
-def get_activitylog_service(db: Session = Depends(get_db)):
-    return ActivityLogService(db)
-
-def get_url_service(db: Session = Depends(get_db), 
-                    activity_log_service: ActivityLogService = Depends(get_activitylog_service)
-                    ) -> URLService:
-    return URLService(db, activity_log_service)
+def get_url_service(db: Session = Depends(get_db)) -> URLService:
+    return URLService(
+        db,
+        ActivityLogService(db),
+        AnomalyService(db)
+    )
 
 
 @router.post("/check", response_model=URLCheckResponse)

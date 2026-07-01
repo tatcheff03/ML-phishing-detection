@@ -4,6 +4,7 @@ import models
 import api.auth_api
 import api.url_check_api
 import api.activity_log_api
+import api.anomalies_api
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
@@ -15,3 +16,4 @@ def root():
 app.include_router(api.auth_api.router, prefix="/auth", tags=["auth"])
 app.include_router(api.url_check_api.router, prefix="/url", tags=["url"])
 app.include_router(api.activity_log_api.router, prefix="/logs", tags=["logs"])
+app.include_router(api.anomalies_api.router, prefix="/anomalies", tags=["anomalies"])

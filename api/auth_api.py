@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from config.database import get_db
+from services.anomaly_service import AnomalyService
 from services.user_service import UserService
 from services.auth_service import AuthService
 from services.activitylog_service import ActivityLogService
@@ -15,7 +16,8 @@ router = APIRouter()
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(
         UserService(db),
-        ActivityLogService(db)
+        ActivityLogService(db),
+        AnomalyService(db)
     )
 
 # register user endpoint

@@ -5,10 +5,13 @@ from services.pass_utils import hash_password, verify_password
 from utils.activities_actions import LOGIN, FAILED_LOGIN
 
 class AuthService:
-    def __init__(self,  user_service, activitylog_service):
+    failed_login_counter = {}
+
+    def __init__(self,  user_service, activitylog_service, anomaly_service):
         self.user_service = user_service
         self.activitylog_service = activitylog_service
-
+        self.anomaly_service = anomaly_service
+        
     # register a user
     def register(self, user_data):
         try:
@@ -42,9 +45,25 @@ class AuthService:
         user = self.authenticate(username, password)
 
         if not user:
-           self._log(user_id=None, action=FAILED_LOGIN, endpoint=endpoint, ip_address=ip_address)
-           return None
+            current = self.failed_login_counter.get(ip_address, 0) + 1
+            self.failed_login_counter[ip_address] = current
 
+            if current >= 5:
+                raise HTTPException(status_code=429, detail="Too many failed login attempts.")
+
+            self._log(user_id=None, action=FAILED_LOGIN, endpoint=endpoint, ip_address=ip_address)
+            
+            self.anomaly_service.create_anomaly(
+                user_id=None,
+                risk_score=60,
+                description=f"Failed login attempt for username: {username}"
+            )
+            
+            return None
+
+        # when login is successful reset counter
+        self.failed_login_counter[ip_address] = 0  
+        
         self._log(user_id=user.id, action=LOGIN, endpoint=endpoint, ip_address=ip_address)
         print(f"User logged in successfully: {user.username}")
         return user

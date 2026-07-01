@@ -6,10 +6,11 @@ from utils.activities_actions import URL_CHECK
 
 
 class URLService:
-    def __init__(self, db, activitylog_service):
+    def __init__(self, db, activitylog_service, anomaly_service):
         self.db = db
         self.activitylog_service = activitylog_service
-        
+        self.anomaly_service = anomaly_service
+
     # all methods executed when checking a probale phishing URL
     def check_url(self, url: str, user_id: int, ip_address: str):
         endpoint = "/check"
@@ -19,6 +20,14 @@ class URLService:
         label = self.classify_risk(score)
 
         check = self.save_check(url, score, label, user_id)
+        
+        # create anomaly when URL is phishing
+        if label == "Phishing":
+            self.anomaly_service.create_anomaly(
+                user_id=user_id,
+                risk_score=score,  
+                description=f"Phishing URL detected: {url}"
+            )
 
         # log the activity
         self._log(
@@ -118,9 +127,9 @@ class URLService:
 
     # label the risk based on the calculated score
     def classify_risk(self, score):
-        if score > 70:
+        if score >= 70:
             return "Phishing"
-        elif score > 40:
+        elif score >= 40:
             return "Suspicious"
         else:
             return "safe"
