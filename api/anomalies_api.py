@@ -13,7 +13,7 @@ def get_anomaly_service(db: Session = Depends(get_db)) -> AnomalyService:
 # get all anomalies (admin only)
 @router.get("/all")
 def get_all_anomalies(
-    аdmin_user = Depends(require_admin), 
+    admin_user = Depends(require_admin), 
     anomaly_service: AnomalyService = Depends(get_anomaly_service)):
     return anomaly_service.get_all_anomalies()
 
