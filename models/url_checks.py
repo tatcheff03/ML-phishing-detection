@@ -9,7 +9,11 @@ class URLChecks(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     url_address = Column(String, nullable=False)
-    risk_score = Column(Float, nullable=True)
+    
+    rule_score = Column(Float, nullable=True)
+    ml_score = Column(Float, nullable=True)
+    final_score = Column(Float, nullable=True)
+    
     prediction = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

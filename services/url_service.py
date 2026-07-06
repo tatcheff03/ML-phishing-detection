@@ -6,29 +6,58 @@ from utils.activities_actions import URL_CHECK
 
 
 class URLService:
-    def __init__(self, db, activitylog_service, anomaly_service):
+    PHISHING_THRESHOLD = 70
+    SUSPICIOUS_THRESHOLD = 40
+    
+    def __init__(self, db, activitylog_service, anomaly_service, ml_service):
         self.db = db
         self.activitylog_service = activitylog_service
         self.anomaly_service = anomaly_service
+        self.ml_service = ml_service
+        
+
 
     # all methods executed when checking a probale phishing URL
     def check_url(self, url: str, user_id: int, ip_address: str):
         endpoint = "/check"
         
         features = self.extract_features(url)
-        score = self.calc_risk(features)
-        label = self.classify_risk(score)
+        
+        # feature vector for the ML model
+        features_vector = [
+            features["url_length"],
+            features["dots"],
+            features["dashes"],
+            int(features["has_ip"]),
+            int(features["has_https"]),
+            int(features["suspicious_tld"]),
+            int(features["free_hosting"]),
+            int(features["brand_match"]),
+            int(features["phishing_keyword"]),
+            int(features["generic_keyword"])
+        ]
+        
+        # rule-based score      
+        rule_score = (self.calc_risk(features) / 120) * 100
+        
+        # ML model score
+        ml_score = self.ml_service.predict(features_vector)
+        
+        # hybrid decision 
+        final_score = (rule_score * 0.6) + (ml_score * 0.4)  # final score is a weighted average 60/40
+        label = self.classify_risk(final_score) 
 
-        check = self.save_check(url, score, label, user_id)
+        # save to DB
+        check = self.save_check(url, rule_score, ml_score, final_score, label, user_id)
         
         # create anomaly when URL is phishing
-        if label == "Phishing":
+        if final_score >= self.PHISHING_THRESHOLD:
             self.anomaly_service.create_anomaly(
                 user_id=user_id,
-                risk_score=score,  
+                risk_score=final_score,  
                 description=f"Phishing URL detected: {url}"
             )
-
+        print (features)
         # log the activity
         self._log(
             user_id=user_id,
@@ -111,10 +140,14 @@ class URLService:
     # calculate brand impersonation risk
     def brand_risk(self, f):
         
-        is_impersonation = (f["brand_match"] and 
-                           (f["suspicious_tld"] or f["free_hosting"]))
-        if is_impersonation:
-            return 30
+        if f["brand_match"] and f["suspicious_tld"] :
+            return 50
+        
+        if f["brand_match"] and f["free_hosting"]:
+            return 40
+        
+        if f["brand_match"] and not f["has_https"]:
+            return 35
 
         return 0
         
@@ -126,10 +159,10 @@ class URLService:
         return score
 
     # label the risk based on the calculated score
-    def classify_risk(self, score):
-        if score >= 70:
+    def classify_risk(self, final_score):
+        if final_score >= self.PHISHING_THRESHOLD:
             return "Phishing"
-        elif score >= 40:
+        elif final_score >= self.SUSPICIOUS_THRESHOLD:
             return "Suspicious"
         else:
             return "safe"
@@ -146,11 +179,13 @@ class URLService:
 
         return score
 
-    def save_check(self, url: str, score: float, label: str, user_id: int):
+    def save_check(self, url: str,rule_score: float, ml_score: float, final_score: float, label: str, user_id: int):
         check = URLChecks(
             user_id=user_id,
             url_address=url,
-            risk_score=score,
+            rule_score=round(rule_score, 2),
+            ml_score=round(ml_score, 2),
+            final_score=round(final_score, 2),
             prediction=label
         )
 

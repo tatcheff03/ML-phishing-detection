@@ -1,2 +1,4 @@
 /.env
 /__pycache__/
+/ml/dataset.csv
+/ml/model.pkl

@@ -10,8 +10,11 @@ class URLCheckRequest(BaseModel):
 class URLCheckResponse(BaseModel):
     id: int
     url_address: str
-    risk_score: float
     prediction: str
+    
+    rule_score: float
+    ml_score: float
+    final_score: float
     created_at: datetime
 
     class Config:

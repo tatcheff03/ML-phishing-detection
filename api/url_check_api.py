@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from fastapi import Depends, APIRouter, Request
 from sqlalchemy.orm import Session
 
@@ -5,19 +7,30 @@ from config.database import get_db
 from services.url_service import URLService
 from services.activitylog_service import ActivityLogService
 from services.anomaly_service import AnomalyService
+from ml.ml_service import MLService
+from functools import lru_cache
 from schemas.urlcheckrequest import URLCheckRequest, URLCheckResponse
 from auth.dependencies import get_current_user
 
 
 router = APIRouter()
 
+@lru_cache()
+def get_ml_service():
+    return MLService(model_path='model.pkl')
+
+
 # services dependency injection
-def get_url_service(db: Session = Depends(get_db)) -> URLService:
+def get_url_service(db: Session = Depends(get_db),
+                    ml_service: MLService = Depends(get_ml_service)
+                    ) -> URLService:
     return URLService(
         db,
         ActivityLogService(db),
-        AnomalyService(db)
+        AnomalyService(db),
+        ml_service
     )
+
 
 
 @router.post("/check", response_model=URLCheckResponse)
