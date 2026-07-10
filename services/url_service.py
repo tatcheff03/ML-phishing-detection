@@ -1,13 +1,15 @@
-from urllib.parse import urlparse
-import ipaddress
+from utils.feature_extractor import extract_features
 from models.url_checks import URLChecks
-from utils.url_patterns import *
 from utils.activities_actions import URL_CHECK
 
 
 class URLService:
     PHISHING_THRESHOLD = 70
     SUSPICIOUS_THRESHOLD = 40
+    MAX_RULE_SCORE = 120
+    
+    RULE_WEIGHT=0.6
+    ML_WEIGHT=0.4
     
     def __init__(self, db, activitylog_service, anomaly_service, ml_service):
         self.db = db
@@ -18,33 +20,43 @@ class URLService:
 
 
     # all methods executed when checking a probale phishing URL
-    def check_url(self, url: str, user_id: int, ip_address: str):
+    def check_url(self, url: str, user_id: int, ip_address: str) -> URLChecks:
         endpoint = "/check"
         
-        features = self.extract_features(url)
+        features = extract_features(url)
         
-        # feature vector for the ML model
+        # exctracted features converted into input vector for the ML model
         features_vector = [
             features["url_length"],
             features["dots"],
             features["dashes"],
             int(features["has_ip"]),
             int(features["has_https"]),
+            int(features["has_scheme"]),
+            int(features["subdomain_count"]),
             int(features["suspicious_tld"]),
             int(features["free_hosting"]),
             int(features["brand_match"]),
+            int(features["brand_impersonation"]),
             int(features["phishing_keyword"]),
-            int(features["generic_keyword"])
+            int(features["generic_keyword"]),
+            int(features["suspicious_subdomain"]),
+            int(features["trusted_domain"])
         ]
+    
         
         # rule-based score      
-        rule_score = (self.calc_risk(features) / 120) * 100
+        raw_rule_score = self.calc_risk(features)
+        rule_score = min((raw_rule_score / self.MAX_RULE_SCORE) * 100, 100)
         
         # ML model score
         ml_score = self.ml_service.predict(features_vector)
         
+        print (features_vector)
+        print ("ML:", ml_score)
+        
         # hybrid decision 
-        final_score = (rule_score * 0.6) + (ml_score * 0.4)  # final score is a weighted average 60/40
+        final_score = (rule_score * self.RULE_WEIGHT) + (ml_score * self.ML_WEIGHT)  # final score is a weighted average 60/40
         label = self.classify_risk(final_score) 
 
         # save to DB
@@ -67,67 +79,15 @@ class URLService:
         )
 
         return check
-    
-    # check if it is valid url that contains IP address
-    def has_ip(self, parsed):
-        host = parsed.hostname
-
-        if not host:
-            return False
-
-        try:
-            ipaddress.ip_address(host)
-            return True
-        except ValueError:
-            return False
-
-    # extract features logic from the URL
-    def extract_features(self, url: str):
-        url = url.strip().lower() # normalize url
-        
-        has_https = url.startswith("https://") # check if orig.URl uses https
-        url_for_parse = url
-        
-        # Add default scheme so urlparse extracts the hostname
-        if not url_for_parse.startswith(('http://', 'https://')):
-            url_for_parse = 'https://' + url_for_parse 
-        parsed = urlparse(url_for_parse)
-
-        domain = (parsed.hostname or "").lower() # extract normalized hostname 
-        text = url.replace("-", " ").replace("_", " ") # prepare text for keyword search
-        return {
-            "url_length": len(url),
-            "dots": url.count('.'),
-            "dashes": url.count('-'),
-            "has_ip": self.has_ip(parsed),
-            "has_https": has_https,
-
-            "domain": domain,
-
-            "suspicious_tld": any(domain.endswith(tld) for tld in SUSPICIOUS_TLDS),
-            "free_hosting": any(domain.endswith(h) for h in FREE_HOSTING_SUFFIXES),
-
-            "brand_match": any(
-                b in domain for b in (BG_COURIER_BRANDS + BULGARIAN_GOVT_BRANDS)
-            ),
-        
-            "text":text,
-            "phishing_keyword": any(k in text for k in PHISHING_KEYWORDS),
-            "generic_keyword": any(k in text for k in GENERIC_KEYWORDS)
-            
-            
-        }
-        
-
 
     # calculate structural risk
     def structural_risk(self, features):
         score = 0
         score += 40 if features["has_ip"] else 0
-        score += 25 if features["url_length"] > 75 else 0
+        score += 15 if features["url_length"] > 120 else 0
         score += 15 if features["dashes"] > 3 else 0
         score += 10 if features["dots"] > 3 and not features["brand_match"] else 0
-        score += 10 if not features["has_https"] else 0 
+        score += 10 if features["has_scheme"] and not features["has_https"] else 0
         return score
 
     # calculate domain risk
@@ -146,8 +106,6 @@ class URLService:
         if f["brand_match"] and f["free_hosting"]:
             return 40
         
-        if f["brand_match"] and not f["has_https"]:
-            return 35
 
         return 0
         
@@ -159,17 +117,17 @@ class URLService:
         return score
 
     # label the risk based on the calculated score
-    def classify_risk(self, final_score):
+    def classify_risk(self, final_score:float)-> str:
         if final_score >= self.PHISHING_THRESHOLD:
             return "Phishing"
-        elif final_score >= self.SUSPICIOUS_THRESHOLD:
+        if final_score >= self.SUSPICIOUS_THRESHOLD:
             return "Suspicious"
-        else:
-            return "safe"
+        
+        return "Safe"
 
 
     #calculate total risk score
-    def calc_risk(self, features):
+    def calc_risk(self, features:dict)-> float:
         score = 0
 
         score += self.structural_risk(features)

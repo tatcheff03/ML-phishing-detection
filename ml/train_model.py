@@ -3,8 +3,15 @@ from sklearn.ensemble import RandomForestClassifier # random forest model
 from sklearn.model_selection import train_test_split # splits the dataset into training and testing 
 from sklearn.metrics import classification_report # generates classification metrics (accuracy, precision, recall, f1-score)
 import pandas as pd
+import os
+from sklearn.metrics import confusion_matrix
 
-dataset= pd.read_csv('dataset.csv') # load dataset 
+# get current dir and build path to feature dataset
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+dataset_path = os.path.join(BASE_DIR, "dataset_features.csv")
+
+dataset= pd.read_csv(dataset_path) # load dataset 
+
 
 # split the dataset into features (X) and labels (y)
 X = dataset.drop(columns=["label"])
@@ -27,5 +34,10 @@ predictions = model.predict(X_test)
 # evaluate model performance using classification metrics 
 # (outputs accuracy, precision, recall, f1-score)
 print(classification_report(y_test, predictions)) 
+print(confusion_matrix(y_test, predictions))
+
 # save trained model to file
-joblib.dump(model, 'model.pkl') 
+model_path = os.path.join(BASE_DIR, "model.pkl")
+
+joblib.dump(model, model_path) 
+print(f"Trained model saved to {model_path}")

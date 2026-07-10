@@ -10,12 +10,19 @@ class MLService:
     "dashes",
     "has_ip",
     "has_https",
+    "has_scheme",
+    "subdomain_count",
     "suspicious_tld",
     "free_hosting",
     "brand_match",
+    "brand_impersonation",
     "phishing_keyword",
-    "generic_keyword"
+    "generic_keyword",
+    "suspicious_subdomain",
+    "trusted_domain"
     ]
+    
+    
     
     # load trained model
     def __init__(self,model_path = 'model.pkl'):
@@ -33,4 +40,5 @@ class MLService:
         # get phishing probability
         proba = self.model.predict_proba(features)[0][1]
         return float(proba * 100)  
+    
     
