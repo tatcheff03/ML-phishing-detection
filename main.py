@@ -5,7 +5,21 @@ import api.auth_api
 import api.url_check_api
 import api.activity_log_api
 import api.anomalies_api
+from fastapi.middleware.cors import CORSMiddleware
+
+
 app = FastAPI()
+
+# add cors middleware for frontend requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Base.metadata.create_all(bind=engine)
 

@@ -42,27 +42,35 @@ class AuthService:
     # verify credentials and log the activity (failed or logged successfully)
     def login(self, username, password, ip_address):
         endpoint = "/auth/login"
+        key = f"{ip_address}:{username}" 
+        
         user = self.authenticate(username, password)
 
         if not user:
-            current = self.failed_login_counter.get(ip_address, 0) + 1
-            self.failed_login_counter[ip_address] = current
-
-            if current >= 5:
-                raise HTTPException(status_code=429, detail="Too many failed login attempts.")
-
+            # Track failed attempts per IP + username
+            
+            current = self.failed_login_counter.get(key, 0) + 1
+            self.failed_login_counter[key] = current
+            
             self._log(user_id=None, action=FAILED_LOGIN, endpoint=endpoint, ip_address=ip_address)
             
-            self.anomaly_service.create_anomaly(
+            # after 5 failed attempts, create an anomaly and raise an exception
+            if current >= 5:
+                
+                self.anomaly_service.create_anomaly(
                 user_id=None,
-                risk_score=60,
-                description=f"Failed login attempt for username: {username}"
+                risk_score=80,
+                description=f"Multiple failed login attempts for username: {username}"
             )
-            
+                raise HTTPException(
+                status_code=429,
+                detail="Too many failed login attempts."
+            )
+
             return None
 
         # when login is successful reset counter
-        self.failed_login_counter[ip_address] = 0  
+        self.failed_login_counter[key] = 0  
         
         self._log(user_id=user.id, action=LOGIN, endpoint=endpoint, ip_address=ip_address)
         print(f"User logged in successfully: {user.username}")
