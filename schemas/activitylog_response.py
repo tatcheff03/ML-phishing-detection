@@ -8,6 +8,7 @@ class ActivityLogResponse(BaseModel):
     action: str
     endpoint: str
     ip_address: str | None
+    url_check_id: int | None
     created_at: datetime
     
     class Config:
