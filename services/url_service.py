@@ -75,7 +75,8 @@ class URLService:
             user_id=user_id,
             action=URL_CHECK,
             endpoint=endpoint,
-            ip_address=ip_address
+            ip_address=ip_address,
+            url_check_id=check.id
         )
 
         return check
@@ -154,10 +155,11 @@ class URLService:
         return check
     
     # helper method for logging
-    def _log(self, *, user_id= None, action, endpoint, ip_address):
+    def _log(self, *, user_id= None, action, endpoint, ip_address, url_check_id=None):
         self.activitylog_service.log_activity(
             user_id=user_id,
             action=action,
             endpoint=endpoint,
-            ip_address=ip_address
+            ip_address=ip_address,
+            url_check_id=url_check_id
         )

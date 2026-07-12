@@ -5,8 +5,8 @@ class ActivityLogService:
         self.db = db
         
     # log a new activity from user
-    def log_activity(self, user_id: int, action: str, endpoint: str, ip_address: str | None):
-        log = ActivityLogs(user_id=user_id, action=action, endpoint=endpoint, ip_address=ip_address)
+    def log_activity(self, user_id: int, action: str, endpoint: str, ip_address: str | None, url_check_id:int | None = None):
+        log = ActivityLogs(user_id=user_id, action=action, endpoint=endpoint, ip_address=ip_address, url_check_id=url_check_id)
         self.db.add(log)
         self.db.commit()
         self.db.refresh(log)
