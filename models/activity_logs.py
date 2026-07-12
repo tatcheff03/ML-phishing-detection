@@ -8,6 +8,7 @@ class ActivityLogs(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    url_check_id = Column(Integer, ForeignKey("url_checks.id"), nullable=True)
 
     action = Column(String, nullable=False)
     ip_address = Column(String, nullable=True)
@@ -15,3 +16,4 @@ class ActivityLogs(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="activity_logs")
+    url_check = relationship("URLChecks", back_populates="activity_logs")
