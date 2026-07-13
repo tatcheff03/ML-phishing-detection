@@ -43,7 +43,8 @@ FREE_HOSTING_SUFFIXES = (
     '.glitch.me',
     '.gitlab.io',
     '.surge.sh',
-    '.fly.dev'
+    '.fly.dev',
+    "freehost.ru"
 )
 
 # bg courier brands (often impersonated)
@@ -76,7 +77,7 @@ GLOBAL_BRANDS = (
     "linkedin",
     "statista",
     "aws",
-)
+) 
 
 
 # bg government related brands 
@@ -88,6 +89,14 @@ BULGARIAN_GOVT_BRANDS = (
     'euslugi',    
     'mvr-gov',    
 )
+
+ALL_BRANDS = tuple(dict.fromkeys(
+    GLOBAL_BRANDS
+    +
+    BG_COURIER_BRANDS
+    +
+    BULGARIAN_GOVT_BRANDS
+))
 
 # verified brands
 TRUSTED_DOMAINS = (
@@ -112,6 +121,7 @@ TRUSTED_DOMAINS = (
     "instagram.com",
 
     "github.com",
+    "github.io",
     "gitlab.com",
 
     "stackoverflow.com",

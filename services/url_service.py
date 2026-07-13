@@ -4,12 +4,12 @@ from utils.activities_actions import URL_CHECK
 
 
 class URLService:
-    PHISHING_THRESHOLD = 70
-    SUSPICIOUS_THRESHOLD = 40
-    MAX_RULE_SCORE = 120
+    PHISHING_THRESHOLD = 75
+    SUSPICIOUS_THRESHOLD = 45
+    MAX_RULE_SCORE = 130
     
-    RULE_WEIGHT=0.6
-    ML_WEIGHT=0.4
+    RULE_WEIGHT=0.7
+    ML_WEIGHT=0.3
     
     def __init__(self, db, activitylog_service, anomaly_service, ml_service):
         self.db = db
@@ -52,11 +52,9 @@ class URLService:
         # ML model score
         ml_score = self.ml_service.predict(features_vector)
         
-        print (features_vector)
-        print ("ML:", ml_score)
         
         # hybrid decision 
-        final_score = (rule_score * self.RULE_WEIGHT) + (ml_score * self.ML_WEIGHT)  # final score is a weighted average 60/40
+        final_score = (rule_score * self.RULE_WEIGHT) + (ml_score * self.ML_WEIGHT)  # final score is a weighted average 70/30
         label = self.classify_risk(final_score) 
 
         # save to DB
@@ -66,7 +64,7 @@ class URLService:
         if final_score >= self.PHISHING_THRESHOLD:
             self.anomaly_service.create_anomaly(
                 user_id=user_id,
-                risk_score=final_score,  
+                risk_score=round(final_score, 2),
                 description=f"Phishing URL detected: {url}"
             )
         print (features)
@@ -101,14 +99,30 @@ class URLService:
     # calculate brand impersonation risk
     def brand_risk(self, f):
         
-        if f["brand_match"] and f["suspicious_tld"] :
-            return 50
+        if f["brand_impersonation"] and f["suspicious_tld"] :
+            return 60
         
-        if f["brand_match"] and f["free_hosting"]:
+        if f["brand_impersonation"] and f["free_hosting"]:
+            return 40
+        
+        if f["brand_impersonation"]:
             return 40
         
 
         return 0
+    
+    # subdomain risk
+    def subdomain_risk(self, features):
+
+        score = 0
+
+        if features["suspicious_subdomain"]:
+            score += 25
+
+        if features["subdomain_count"] >= 2:
+            score += 10
+
+        return score
         
     # calculate risk by spec.keywords
     def keyword_risk(self, features):
@@ -135,6 +149,7 @@ class URLService:
         score += self.domain_risk(features)
         score += self.brand_risk(features)
         score += self.keyword_risk(features)
+        score += self.subdomain_risk(features)
 
         return score
 

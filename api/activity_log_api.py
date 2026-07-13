@@ -11,27 +11,11 @@ router = APIRouter()
 def get_activitylog_service(db: Session = Depends(get_db)) -> ActivityLogService:
     return ActivityLogService(db)
 
-# get all logs
-@router.get("", response_model=list[ActivityLogResponse])
-def get_all_logs(
-    service: ActivityLogService = Depends (get_activitylog_service),
-    user = Depends(require_admin)
-):
-    return service.get_all_logs()
-            
-# get logs by user 
-@router.get("/user/{user_id}", response_model=list[ActivityLogResponse])
-def get_logs_by_user(
-    user_id: int,
-    service: ActivityLogService = Depends(get_activitylog_service),
-    user = Depends(require_admin)
-):
-    return service.get_logs_by_user(user_id)
 
-# recent 40 logs
+# recent 30 logs
 @router.get("/recent", response_model=list[ActivityLogResponse])
 def get_recent_logs(
-    limit: int = 40,
+    limit: int = 30,
     service: ActivityLogService = Depends(get_activitylog_service),
     user = Depends(require_admin)
 ):
@@ -41,10 +25,11 @@ def get_recent_logs(
 @router.get("/action/{action}", response_model=list[ActivityLogResponse])
 def get_logs_by_action(
     action: str,
+    limit: int = 30,
     service: ActivityLogService = Depends(get_activitylog_service),
     user = Depends(require_admin)
 ):
-    return service.get_logs_by_action(action)
+    return service.get_logs_by_action(action, limit)
 
 # get my activity logs (with actions)
 @router.get("/me", response_model=list[ActivityLogResponse])

@@ -6,7 +6,7 @@ from schemas.urlcheckinfo import URLCheckInfo
 # pydantic model for activity log 
 class ActivityLogResponse(BaseModel):
     id: int
-    user_id: int
+    user_id: int | None
     action: str
     endpoint: str
     ip_address: str | None

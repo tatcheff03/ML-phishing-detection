@@ -5,6 +5,8 @@ import api.auth_api
 import api.url_check_api
 import api.activity_log_api
 import api.anomalies_api
+import api.users_api
+import api.statistics_api
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -31,3 +33,5 @@ app.include_router(api.auth_api.router, prefix="/auth", tags=["auth"])
 app.include_router(api.url_check_api.router, prefix="/url", tags=["url"])
 app.include_router(api.activity_log_api.router, prefix="/logs", tags=["logs"])
 app.include_router(api.anomalies_api.router, prefix="/anomalies", tags=["anomalies"])
+app.include_router(api.users_api.router, prefix="/admin/users", tags=["admin"])
+app.include_router(api.statistics_api.router, prefix="/admin/statistics", tags=["statistics"])

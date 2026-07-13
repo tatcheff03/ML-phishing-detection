@@ -25,11 +25,10 @@ def has_brand_match(domain):
     normalized = domain.replace("-", ".")
     parts = normalized.split(".")
 
-    for brand in GLOBAL_BRANDS:
-        if brand in parts:
-            return True
-
-    return False
+    return any(
+        brand in parts
+        for brand in ALL_BRANDS
+    )
 
 # check if domain belongs to official trusted domain
 def is_trusted_domain(domain):
@@ -49,11 +48,12 @@ def is_brand_impersonation(domain):
         return False
 
     normalized = domain.replace("-", ".")
+
     parts = normalized.split(".")
 
     return any(
         brand in parts
-        for brand in GLOBAL_BRANDS
+        for brand in ALL_BRANDS
     )
 
 # number of subdomains
