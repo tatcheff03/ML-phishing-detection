@@ -60,7 +60,7 @@ class AuthService:
                 self.anomaly_service.create_anomaly(
                 user_id=None,
                 risk_score=80,
-                description=f"Multiple failed login attempts for username: {username}"
+                description=f"Multiple failed login attempts detected for username: {username}"
             )
                 raise HTTPException(
                 status_code=429,
