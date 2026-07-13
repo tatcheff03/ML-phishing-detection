@@ -23,4 +23,4 @@ def get_all_anomalies(
 def my_anomalies(
     current_user = Depends(get_current_user), 
     anomaly_service: AnomalyService = Depends(get_anomaly_service)):
-    return anomaly_service.get_user_anomalies(current_user.id)
+    return anomaly_service.get_recent_anomalies_by_user(current_user.id, limit=10)

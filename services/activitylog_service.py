@@ -1,3 +1,5 @@
+from sqlalchemy.orm import joinedload
+
 from models.activity_logs import ActivityLogs
 
 class ActivityLogService:
@@ -15,8 +17,18 @@ class ActivityLogService:
     def get_all_logs(self):
         return self.db.query(ActivityLogs).order_by(ActivityLogs.created_at.desc()).all()
     
-    def get_logs_by_user(self, user_id: int):
-        return self.db.query(ActivityLogs).filter(ActivityLogs.user_id == user_id).order_by(ActivityLogs.created_at.desc()).all()
+    def get_all_logs_by_user(self, user_id: int):
+        return self.db.query(ActivityLogs).options(joinedload(ActivityLogs.url_check)).filter(ActivityLogs.user_id == user_id).order_by(ActivityLogs.created_at.desc()).all()
+    
+    def get_recent_logs_by_user(self, user_id: int, limit: int = 10):
+        return (
+            self.db.query(ActivityLogs)
+            .options(joinedload(ActivityLogs.url_check))
+            .filter(ActivityLogs.user_id == user_id)
+            .order_by(ActivityLogs.created_at.desc())
+            .limit(limit)
+            .all()
+        )
     
     # get recent 40 logs
     def get_recent_logs(self, limit: int = 40):
