@@ -52,4 +52,4 @@ def get_my_logs(
     service: ActivityLogService = Depends(get_activitylog_service),
     user = Depends(get_current_user)
 ):
-    return service.get_recent_logs_by_user(user.id, limit=10)
+    return service.get_recent_logs_by_user(user.id, limit=15)

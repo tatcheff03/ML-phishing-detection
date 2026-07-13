@@ -20,7 +20,7 @@ class ActivityLogService:
     def get_all_logs_by_user(self, user_id: int):
         return self.db.query(ActivityLogs).options(joinedload(ActivityLogs.url_check)).filter(ActivityLogs.user_id == user_id).order_by(ActivityLogs.created_at.desc()).all()
     
-    def get_recent_logs_by_user(self, user_id: int, limit: int = 10):
+    def get_recent_logs_by_user(self, user_id: int, limit: int = 15):
         return (
             self.db.query(ActivityLogs)
             .options(joinedload(ActivityLogs.url_check))
