@@ -136,6 +136,7 @@ TRUSTED_DOMAINS = (
     "bgpost.bg",
 
     "mvr.bg",
+    "tollpass.bg",
     "egov.bg",
     "bnb.bg",
     
