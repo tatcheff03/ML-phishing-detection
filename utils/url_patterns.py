@@ -87,7 +87,8 @@ BULGARIAN_GOVT_BRANDS = (
     'mvr-bg',     
     'e-uslugi',   
     'euslugi',    
-    'mvr-gov',    
+    'mvr-gov',
+    'tollpass'    
 )
 
 ALL_BRANDS = tuple(dict.fromkeys(
